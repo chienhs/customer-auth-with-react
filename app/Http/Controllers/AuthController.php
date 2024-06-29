@@ -32,9 +32,21 @@ class AuthController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
     }
-    public function register()
+    public function register(Request $request)
     {
-        dd(1);
+        $validator = Validator::make($request->all(), [
+            'name' => ['required'],
+            'password' => ['required'],
+        ], [
+            'name.required' => 'Vui lòng nhập tên người dùng.',
+            'password.required' => 'Vui lòng nhập mật khẩu người dùng.',
+
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()->all()], 422);
+        }
+        $user_info = $validator->validated();
+        dd($user_info);
     }
     public function logout()
     {
