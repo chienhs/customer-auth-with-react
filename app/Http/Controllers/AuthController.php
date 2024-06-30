@@ -5,13 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
     public function login(Request $request)
     {
-
         $validator = Validator::make($request->all(), [
             'name' => ['required'],
             'password' => ['required'],
@@ -26,7 +26,9 @@ class AuthController extends Controller
         $credential = $validator->validated();
 
         if (Auth::attempt($credential)) {
+            $request->session()->regenerate();
             $user = Auth::user();
+            // $request->session();
             return response()->json(['message' => 'Login successful', 'user' => $user]);
         } else {
             // Authentication failed
@@ -55,8 +57,28 @@ class AuthController extends Controller
         $new_user =  User::create($user_info);
         return response()->json(['data' => $new_user], 201);
     }
-    public function logout()
+    public function logout(Request $request)
     {
-        dd(1);
+
+        Auth::logoutOtherDevices(12345678);
+
+        Auth::logout();
+
+        $request->session()->invalidate();
+
+        $request->session()->regenerateToken();
+    }
+    public function confirmPassword(Request $request)
+    {
+        $currentTimeout = config('auth.password_timeout');
+        $newTimeout = 3600;
+        Config::set('auth.password_timeout', $newTimeout);
+        $updatedTimeout = config('auth.password_timeout');
+        $request->session()->passwordConfirmed();
+        return response()->json([
+            'message' => 'Confirm password successful',
+            'current_timeout' => $currentTimeout,
+            'updated_timeout' => $updatedTimeout,
+        ], 200);
     }
 }
